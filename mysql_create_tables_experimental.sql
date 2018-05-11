@@ -15,7 +15,7 @@ CREATE TABLE bans (
   ip varchar(15) NOT NULL,
   `date` datetime NOT NULL,
   gamename varchar(31) NOT NULL,
-  admin varchar(15) NOT NULL,
+  `admin` varchar(15) NOT NULL,
   reason varchar(255) NOT NULL,
   PRIMARY KEY  (id),
   KEY server (server),
@@ -146,4 +146,17 @@ CREATE TABLE w3mmdvars (
   value_real double default NULL,
   value_string varchar(100) default NULL,
   PRIMARY KEY  (id)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS gamelist (
+	id INT NOT NULL AUTO_INCREMENT,
+	botid INT NOT NULL,
+	map VARCHAR(100) NOT NULL,
+	gamename VARCHAR(31) NOT NULL,
+	ownername VARCHAR(15) NOT NULL,
+	creatorname VARCHAR(15) NOT NULL,
+	slotstaken INT NOT NULL,
+	slotstotal INT NOT NULL,
+	usernames VARCHAR(1000),
+	PRIMARY KEY (id)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

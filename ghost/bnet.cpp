@@ -184,6 +184,9 @@ CBNET :: ~CBNET( )
 	for( vector<PairedDPSCheck> :: iterator i = m_PairedDPSChecks.begin( ); i != m_PairedDPSChecks.end( ); ++i )
 		m_GHost->m_Callables.push_back( i->second );
 
+	for (vector<PairedGameUpdate> ::iterator i = m_PairedGameUpdates.begin(); i != m_PairedGameUpdates.end(); ++i)
+		m_GHost->m_Callables.push_back(i->second);
+
 	if( m_CallableAdminList )
 		m_GHost->m_Callables.push_back( m_CallableAdminList );
 
@@ -410,6 +413,19 @@ bool CBNET :: Update( void *fd, void *send_fd )
 		}
 		else
 			++i;
+	}
+
+	for (vector<PairedGameUpdate> ::iterator i = m_PairedGameUpdates.begin(); i != m_PairedGameUpdates.end(); )
+	{
+		if (i->second->GetReady())
+		{
+			m_GHost->m_DB->RecoverCallable(i->second);
+			delete i->second;
+			i = m_PairedGameUpdates.erase(i);
+		}
+		else {
+			++i;
+		}
 	}
 
 	// refresh the admin list every 5 minutes

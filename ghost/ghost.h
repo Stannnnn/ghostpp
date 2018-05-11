@@ -43,6 +43,7 @@ class CLanguage;
 class CMap;
 class CSaveGame;
 class CConfig;
+class CCallableGameUpdate;
 
 struct GProxyReconnector {
 	CTCPSocket *socket;
@@ -89,6 +90,8 @@ public:
 	uint32_t m_AutoHostMaximumGames;		// maximum number of games to auto host
 	uint32_t m_AutoHostAutoStartPlayers;	// when using auto hosting auto start the game when this many players have joined
 	uint32_t m_LastAutoHostTime;			// GetTime when the last auto host was attempted
+	uint32_t m_LastGameUpdateTime;      	// GetTime when the gamelist was last updated
+	CCallableGameUpdate *m_CallableGameUpdate;// threaded database game update in progress
 	bool m_AutoHostMatchMaking;
 	double m_AutoHostMinimumScore;
 	double m_AutoHostMaximumScore;

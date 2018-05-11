@@ -320,6 +320,19 @@ CCallableGamePlayerAdd *CGHostDBMySQL :: ThreadedGamePlayerAdd( uint32_t gameid,
 	return Callable;
 }
 
+CCallableGameUpdate *CGHostDBMySQL::ThreadedGameUpdate(uint32_t gameId, string map, string gamename, string ownername, string creatorname, uint32_t slotsTaken, uint32_t slotsTotal, string usernames)
+{
+	void *Connection = GetIdleConnection();
+	
+	if (!Connection)
+		 ++m_NumConnections;
+	
+	CCallableGameUpdate * Callable = new CMySQLCallableGameUpdate(gameId, map, gamename, ownername, creatorname, slotsTaken, slotsTotal, usernames, Connection, m_BotID, m_Server, m_Database, m_User, m_Password, m_Port);
+	CreateThread(Callable);
+	++m_OutstandingCallables;
+	return Callable;
+}
+
 CCallableGamePlayerSummaryCheck *CGHostDBMySQL :: ThreadedGamePlayerSummaryCheck( string name )
 {
 	void *Connection = GetIdleConnection( );
@@ -792,6 +805,53 @@ uint32_t MySQLGameAdd( void *conn, string *error, uint32_t botid, string server,
 		*error = mysql_error( (MYSQL *)conn );
 	else
 		RowID = mysql_insert_id( (MYSQL *)conn );
+
+	return RowID;
+}
+
+uint32_t MySQLGameUpdate(void *conn, string *error, uint32_t gameid, uint32_t botid, string map, string gamename, string ownername, string creatorname, uint32_t slotsTaken, uint32_t slotsTotal, string usernames)
+{
+	uint32_t RowID = 0;
+	string EscMap = MySQLEscapeString(conn, map);
+	string EscGameName = MySQLEscapeString(conn, gamename);
+	string EscOwnerName = MySQLEscapeString(conn, ownername);
+	string EscCreatorName = MySQLEscapeString(conn, creatorname);
+	string EscUsernames = MySQLEscapeString(conn, usernames);
+	string Query = "";
+
+	bool Inserting = false;
+
+	if (gameid == 0) {
+		//CONSOLE_Print("[Debug] insert into gamelist");
+		Query = "INSERT INTO gamelist (botid, map, gamename, ownername, creatorname, slotstaken, slotstotal, usernames) VALUES ('" + UTIL_ToString(botid) + "', '" + EscMap + "', '" + EscGameName + "', '" + EscOwnerName + "', '" + EscCreatorName + "', '" + UTIL_ToString(slotsTaken) + "', '" + UTIL_ToString(slotsTotal) + "', '" + EscUsernames + "')";
+		Inserting = true;
+	} 
+	// Yeye not the fanciest way
+	else if (map == "-2") {
+		//CONSOLE_Print("[Debug] delete from gamelist where id = " + UTIL_ToString(gameid));
+		Query = "DELETE FROM gamelist WHERE id = '" + UTIL_ToString(gameid) + "'";
+		RowID = 0;
+	}
+	else if (map == "-3") {
+		//CONSOLE_Print("[Debug] delete from gamelist");
+		Query = "DELETE FROM gamelist";
+		RowID = 0;
+	}
+	else {
+		//CONSOLE_Print("[Debug] update gamelist " + UTIL_ToString(gameid));
+		Query = "UPDATE gamelist SET botid = '" + UTIL_ToString(botid) + "', map = '" + EscMap + "', gamename = '" + EscGameName + "', ownername = '" + EscOwnerName + "', creatorname = '" + EscCreatorName + "', slotstaken = '" + UTIL_ToString(slotsTaken) + "', slotstotal = '" + UTIL_ToString(slotsTotal) + "', usernames = '" + EscUsernames + "' WHERE id='" + UTIL_ToString(gameid) + "'";
+		RowID = gameid;
+	}
+
+	if (mysql_real_query((MYSQL *)conn, Query.c_str(), Query.size()) != 0) {
+		*error = mysql_error((MYSQL *)conn);
+		RowID = 0;
+	}
+	else {
+		if (Inserting) {
+			RowID = mysql_insert_id((MYSQL *)conn);
+		}
+	}
 
 	return RowID;
 }
@@ -1292,6 +1352,16 @@ void CMySQLCallableGameAdd :: operator( )( )
 		m_Result = MySQLGameAdd( m_Connection, &m_Error, m_SQLBotID, m_Server, m_Map, m_GameName, m_OwnerName, m_Duration, m_GameState, m_CreatorName, m_CreatorServer );
 
 	Close( );
+}
+
+void CMySQLCallableGameUpdate :: operator( )( )
+ {
+	Init();
+	
+	if (m_Error.empty())
+		m_Result = MySQLGameUpdate(m_Connection, &m_Error, m_GameID, m_SQLBotID, m_Map, m_GameName, m_OwnerName, m_CreatorName, m_SlotsTaken, m_SlotsTotal, m_Usernames);
+	
+	Close();
 }
 
 void CMySQLCallableGamePlayerAdd :: operator( )( )
