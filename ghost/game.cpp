@@ -1115,10 +1115,10 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
 				{
 					m_Latency = UTIL_ToUInt32( Payload );
 
-					if( m_Latency <= 20 )
+					if( m_Latency <= 10 )
 					{
-						m_Latency = 20;
-						SendAllChat( m_GHost->m_Language->SettingLatencyToMinimum( "20" ) );
+						m_Latency = 10;
+						SendAllChat( m_GHost->m_Language->SettingLatencyToMinimum( "10" ) );
 					}
 					else if( m_Latency >= 500 )
 					{
@@ -1761,29 +1761,25 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
 	// !VOTESTART
 	// !VS
 	//
-	
-	bool votestartAuth = player->GetSpoofed( ) && ( AdminCheck || RootAdminCheck || IsOwner( User ) );
-	bool votestartAutohost = m_GameState == GAME_PUBLIC && !m_GHost->m_AutoHostGameName.empty( ) && m_GHost->m_AutoHostMaximumGames != 0 && m_GHost->m_AutoHostAutoStartPlayers != 0 && m_AutoStartPlayers != 0;
-	if( (Command == "vs" || Command == "votestart") && !m_CountDownStarted && (votestartAuth || votestartAutohost || !m_GHost->m_VoteStartAutohostOnly))
+	if( (Command == "vs" || Command == "votestart") && !m_CountDownStarted )
 	{
         if( !m_GHost->m_CurrentGame->GetLocked( ) )
 		{
-			if(m_StartedVoteStartTime == 0) { //need >minplayers or admin to START a votestart
-				if (GetNumHumanPlayers() < m_GHost->m_VoteStartMinPlayers && !votestartAuth) { //need at least eight players to votestart
+			if(m_StartedVoteStartTime == 0) {
+				if (GetNumHumanPlayers() < m_GHost->m_VoteStartMinPlayers) { //need at least min players to votestart
 					uint32_t MinPlayers = m_GHost->m_VoteStartMinPlayers;					
 					SendChat( player, "You cannot use " + string( 1, m_GHost->m_CommandTrigger ) + "votestart until there are " + UTIL_ToString(MinPlayers) + " or more players!" );
 					return false;
 				}
-				if ( m_GHost->m_StartGameWhenAtLeastXPlayers != 0 && GetNumHumanPlayers( ) < m_GHost->m_StartGameWhenAtLeastXPlayers ){						
-					SendChat( player->GetPID(), "You cannot use " + string( 1, m_GHost->m_CommandTrigger ) + "votestart until there are " + UTIL_ToString(m_GHost->m_StartGameWhenAtLeastXPlayers) + " or more players!");
-					return HideCommand;
-				}      
+
 				for( vector<CGamePlayer *> :: iterator i = m_Players.begin( ); i != m_Players.end( ); ++i )
 					(*i)->SetStartVote( false );
+
 				m_StartedVoteStartTime = GetTime();
-				//if(m_GHost->m_FakePlayersLobby && !(m_FakePlayers.empty()))					
+
 				if( m_FakePlayerPID != 255 )
 					DeleteFakePlayer();
+
 				CONSOLE_Print( "[GAME: " + m_GameName + "] votestart started by player [" + User + "]" );
 			}
 		
@@ -1804,9 +1800,9 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
 			  StartCountDown( true, 5 );
 			}
 		}
-            else {
-				SendChat( player, "Error: cannot votestart because the game is locked. Owner is " + m_OwnerName );
-            }
+        else {
+			SendChat( player, "Error: cannot votestart because the game is locked. Owner is " + m_OwnerName );
+        }
 	}
 
 	//
