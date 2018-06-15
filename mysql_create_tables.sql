@@ -136,5 +136,5 @@ CREATE TABLE IF NOT EXISTS gamelist (
 	creatorname VARCHAR(15) NOT NULL,
 	slotstaken INT NOT NULL,
 	slotstotal INT NOT NULL,
-	usernames VARCHAR(1000)
+	usernames VARCHAR(10000)
 );
