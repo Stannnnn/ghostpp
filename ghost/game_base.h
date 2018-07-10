@@ -69,6 +69,7 @@ protected:
 	unsigned char m_VirtualHostPID;					// virtual host's PID
 	unsigned char m_FakePlayerPID;					// the fake player's PID (if present)
 	unsigned char m_GProxyEmptyActions;
+	string m_MapName;								// map name
 	string m_GameName;								// game name
 	string m_LastGameName;							// last game name (the previous game name before it was rehosted)
 	string m_VirtualHostName;						// virtual host's name
@@ -130,7 +131,6 @@ protected:
 	bool m_LocalAdminMessages;						// if local admin messages should be relayed or not
 	int m_DoDelete;									// notifies thread to exit
 	uint32_t m_LastReconnectHandleTime;				// last time we tried to handle GProxy reconnects
-	uint32_t m_GameID;								// gameid used to update gamelist table
 
 public:
 	vector<string> m_DoSayGames;					// vector of strings we should announce to the current game
@@ -161,7 +161,6 @@ public:
 	virtual string GetCreatorServer( )				{ return m_CreatorServer; }
 	virtual uint32_t GetHostCounter( )				{ return m_HostCounter; }
 	virtual uint32_t GetLastLagScreenTime( )		{ return m_LastLagScreenTime; }
-	virtual uint32_t GetGameID( )					{ return m_GameID; }
 	virtual bool GetLocked( )						{ return m_Locked; }
 	virtual bool GetRefreshMessages( )				{ return m_RefreshMessages; }
 	virtual bool GetCountDownStarted( )				{ return m_CountDownStarted; }
@@ -177,7 +176,6 @@ public:
 	virtual void SetMaximumScore( double nMaximumScore )				{ m_MaximumScore = nMaximumScore; }
 	virtual void SetRefreshError( bool nRefreshError )					{ m_RefreshError = nRefreshError; }
 	virtual void SetMatchMaking( bool nMatchMaking )					{ m_MatchMaking = nMatchMaking; }
-	virtual void SetGameID( uint32_t nGameID )							{ m_GameID = nGameID; }
 
 	virtual uint32_t GetNextTimedActionTicks( );
 	virtual uint32_t GetSlotsOccupied( );

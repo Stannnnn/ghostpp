@@ -87,7 +87,7 @@ public:
 	virtual bool BanRemove( string user );
 	virtual vector<CDBBan *> BanList( string server );
 	virtual uint32_t GameAdd( string server, string map, string gamename, string ownername, uint32_t duration, uint32_t gamestate, string creatorname, string creatorserver );
-	virtual string GameUpdate(uint32_t gameId, string map, string gamename, string ownername, string creatorname, uint32_t slotsTaken, uint32_t slotsTotal, string usernames);
+	virtual string GameUpdate(string games);
 	virtual uint32_t GamePlayerAdd( uint32_t gameid, string name, string ip, uint32_t spoofed, string spoofedrealm, uint32_t reserved, uint32_t loadingtime, uint32_t left, string leftreason, uint32_t team, uint32_t colour );
 	virtual uint32_t GamePlayerCount( string name );
 	virtual CDBGamePlayerSummary *GamePlayerSummaryCheck( string name );
@@ -118,7 +118,7 @@ public:
 	virtual CCallableBanRemove *ThreadedBanRemove( string user );
 	virtual CCallableBanList *ThreadedBanList( string server );
 	virtual CCallableGameAdd *ThreadedGameAdd( string server, string map, string gamename, string ownername, uint32_t duration, uint32_t gamestate, string creatorname, string creatorserver );
-	virtual CCallableGameUpdate *ThreadedGameUpdate(uint32_t gameId, string map, string gamename, string ownername, string creatorname, uint32_t slotsTaken, uint32_t slotsTotal, string usernames );
+	virtual CCallableGameUpdate *ThreadedGameUpdate(string games);
 	virtual CCallableGamePlayerAdd *ThreadedGamePlayerAdd( uint32_t gameid, string name, string ip, uint32_t spoofed, string spoofedrealm, uint32_t reserved, uint32_t loadingtime, uint32_t left, string leftreason, uint32_t team, uint32_t colour );
 	virtual CCallableGamePlayerSummaryCheck *ThreadedGamePlayerSummaryCheck( string name );
 	virtual CCallableDotAGameAdd *ThreadedDotAGameAdd( uint32_t gameid, uint32_t winner, uint32_t min, uint32_t sec );
@@ -196,18 +196,11 @@ public:
 class CCallableGameUpdate : virtual public CBaseCallable
 {
 	protected:
-		uint32_t m_GameID;
-		string m_Map;
-		string m_GameName;
-		string m_OwnerName;
-		string m_CreatorName;
-		string m_Usernames;
-		uint32_t m_SlotsTaken;
-		uint32_t m_SlotsTotal;
 		uint32_t m_Result;
+		string m_Games;
 		
 	public:
-		CCallableGameUpdate(uint32_t gameId, string map, string gamename, string ownername, string creatorname, uint32_t slotsTaken, uint32_t slotsTotal, string usernames) : CBaseCallable(), m_GameID(gameId), m_Map(map), m_GameName(gamename), m_OwnerName(ownername), m_CreatorName(creatorname), m_SlotsTaken(slotsTaken), m_SlotsTotal(slotsTotal), m_Usernames(usernames) { }
+		CCallableGameUpdate(string games) : CBaseCallable(), m_Games(games) { }
 		virtual ~CCallableGameUpdate();
 			
 		virtual uint32_t GetResult() { return m_Result; }

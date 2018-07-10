@@ -542,12 +542,12 @@ CDBDotAPlayerSummary :: ~CDBDotAPlayerSummary( )
 
 }
 
-string CGHostDB::GameUpdate(uint32_t gameId, string map, string gamename, string ownername, string creatorname, uint32_t slotsTaken, uint32_t slotsTotal, string usernames)
+string CGHostDB::GameUpdate(string games)
 {
 	return "";
 }
 
-CCallableGameUpdate *CGHostDB::ThreadedGameUpdate(uint32_t gameId, string map, string gamename, string ownername, string creatorname, uint32_t slotsTaken, uint32_t slotsTotal, string usernames)
+CCallableGameUpdate *CGHostDB::ThreadedGameUpdate(string games)
 {
 	return NULL;
 }
