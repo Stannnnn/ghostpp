@@ -3699,10 +3699,10 @@ string CBaseGame::GetPlayerList()
 			CGamePlayer * player = GetPlayerFromSID(i);
 
 			if (player)
-				players += player->GetName() + "__1__" + player->GetSpoofedRealm() + "__1__" + UTIL_ToString(player->GetPing(m_GHost->m_LCPings)) + "__1__" + player->GetExternalIPString() + "__1__";
+				players += player->GetName() + "__|__" + player->GetSpoofedRealm() + "__|__" + UTIL_ToString(player->GetPing(m_GHost->m_LCPings)) + "__|__" + player->GetExternalIPString() + "__|__";
 			}
 		else if (m_Slots[i].GetSlotStatus() == SLOTSTATUS_OPEN)
-			 players += "__3__";
+			 players += "__||__";
 		}
 	return players;
 	}

@@ -1196,15 +1196,15 @@ bool CGHost :: Update( long usecBlock )
 		if (m_CurrentGame) {
 			m_UpdateGameList = true;
 
-			games += "lobby__1__";
-			games += m_CurrentGame->GetMapName() + "__1__";
-			games += m_CurrentGame->GetGameName() + "__1__";
-			games += m_CurrentGame->GetOwnerName() + "__1__";
-			games += m_CurrentGame->GetCreatorName() + "__1__";
-			games += UTIL_ToString(m_CurrentGame->GetNumHumanPlayers()) + "__1__";
-			games += UTIL_ToString(m_CurrentGame->GetSlotsOpen()) + "__3__";
+			games += "lobby__|__";
+			games += m_CurrentGame->GetMapName() + "__|__";
+			games += m_CurrentGame->GetGameName() + "__|__";
+			games += m_CurrentGame->GetOwnerName() + "__|__";
+			games += m_CurrentGame->GetCreatorName() + "__|__";
+			games += UTIL_ToString(m_CurrentGame->GetNumHumanPlayers()) + "__|__";
+			games += UTIL_ToString(m_CurrentGame->GetSlotsOpen()) + "__||__";
 
-			games += m_CurrentGame->GetPlayerList() + "__6__";
+			games += m_CurrentGame->GetPlayerList() + "__|||__";
 		}
 		
 		if (m_Games.size()) {
@@ -1212,15 +1212,15 @@ bool CGHost :: Update( long usecBlock )
 
 			for (vector<CBaseGame *> ::iterator i = m_Games.begin(); i != m_Games.end(); ++i) {
 				if (*i) {
-					games += "ingame__1__";
-					games += (*i)->GetMapName() + "__1__";
-					games += (*i)->GetGameName() + "__1__";
-					games += (*i)->GetOwnerName() + "__1__";
-					games += (*i)->GetCreatorName() + "__1__";
-					games += UTIL_ToString((*i)->GetNumHumanPlayers()) + "__1__";
-					games += UTIL_ToString((*i)->GetSlotsOpen()) + "__3__";
+					games += "ingame__|__";
+					games += (*i)->GetMapName() + "__|__";
+					games += (*i)->GetGameName() + "__|__";
+					games += (*i)->GetOwnerName() + "__|__";
+					games += (*i)->GetCreatorName() + "__|__";
+					games += UTIL_ToString((*i)->GetNumHumanPlayers()) + "__|__";
+					games += UTIL_ToString((*i)->GetSlotsOpen()) + "__||__";
 
-					games += (*i)->GetPlayerList() + "__6__";
+					games += (*i)->GetPlayerList() + "__|||__";
 				}
 			}
 		}
