@@ -158,6 +158,7 @@ public:
 	boost::thread *inputThread;
     boost::mutex m_InputMutex;
     string m_InputMessage;
+	bool m_UpdateGameList;
 
 	CGHost( CConfig *CFG );
 	~CGHost( );

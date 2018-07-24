@@ -1194,34 +1194,42 @@ bool CGHost :: Update( long usecBlock )
 		string games = "";
 
 		if (m_CurrentGame) {
-			games += "lobby\t";
-			games += m_CurrentGame->GetMapName() + "\t";
-			games += m_CurrentGame->GetGameName() + "\t";
-			games += m_CurrentGame->GetOwnerName() + "\t";
-			games += m_CurrentGame->GetCreatorName() + "\t";
-			games += m_CurrentGame->GetNumHumanPlayers() + "\t";
-			games += m_CurrentGame->GetSlotsOpen() + "\t\t\t";
+			m_UpdateGameList = true;
 
-			games += m_CurrentGame->GetPlayerList() + "\t\t\t\t\t\t";
+			games += "lobby__1__";
+			games += m_CurrentGame->GetMapName() + "__1__";
+			games += m_CurrentGame->GetGameName() + "__1__";
+			games += m_CurrentGame->GetOwnerName() + "__1__";
+			games += m_CurrentGame->GetCreatorName() + "__1__";
+			games += UTIL_ToString(m_CurrentGame->GetNumHumanPlayers()) + "__1__";
+			games += UTIL_ToString(m_CurrentGame->GetSlotsOpen()) + "__3__";
+
+			games += m_CurrentGame->GetPlayerList() + "__6__";
 		}
 		
 		if (m_Games.size()) {
+			m_UpdateGameList = true;
+
 			for (vector<CBaseGame *> ::iterator i = m_Games.begin(); i != m_Games.end(); ++i) {
 				if (*i) {
-					games += "ingame\t";
-					games += (*i)->GetMapName() + "\t";
-					games += (*i)->GetGameName() + "\t";
-					games += (*i)->GetOwnerName() + "\t";
-					games += (*i)->GetCreatorName() + "\t";
-					games += (*i)->GetNumHumanPlayers() + "\t";
-					games += (*i)->GetSlotsOpen() + "\t\t\t";
+					games += "ingame__1__";
+					games += (*i)->GetMapName() + "__1__";
+					games += (*i)->GetGameName() + "__1__";
+					games += (*i)->GetOwnerName() + "__1__";
+					games += (*i)->GetCreatorName() + "__1__";
+					games += UTIL_ToString((*i)->GetNumHumanPlayers()) + "__1__";
+					games += UTIL_ToString((*i)->GetSlotsOpen()) + "__3__";
 
-					games += (*i)->GetPlayerList() + "\t\t\t\t\t\t";
+					games += (*i)->GetPlayerList() + "__6__";
 				}
 			}
 		}
 
-		if (m_CurrentGame) {
+		if (m_UpdateGameList) {
+			if (games.empty()) {
+				m_UpdateGameList = false;
+			}
+
 			m_CallableGameUpdate = m_DB->ThreadedGameUpdate(games);
 		}
 
