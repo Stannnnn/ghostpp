@@ -1761,7 +1761,7 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
 	// !VOTESTART
 	// !VS
 	//
-	if( (Command == "vs" || Command == "votestart") && !m_CountDownStarted )
+	if( (Command == "vs" || Command == "votestart") && m_GHost->m_VoteStartAllowed && !m_CountDownStarted)
 	{
         if( !m_GHost->m_CurrentGame->GetLocked( ) )
 		{
