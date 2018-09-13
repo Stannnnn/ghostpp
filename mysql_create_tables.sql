@@ -131,3 +131,5 @@ CREATE TABLE IF NOT EXISTS gamelist (
 	botid INT NOT NULL,
 	games VARCHAR(16000) NOT NULL
 );
+
+CREATE INDEX gameplayers_name_index ON gameplayers (name);
