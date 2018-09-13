@@ -5,3 +5,17 @@ ghost.cfg
 ghost/ghost++
 ghost.log
 ghost.dbs
+.vs/
+bncsutil/
+ghost/Debug MySQL/
+ghost/Release MySQL/
+boost/
+update_w3mmd_elo/
+update_dota_elo/
+Release MySQL/
+ghost/ghost.vc*
+Backup/
+UpgradeLog.htm
+ghost.VC.db
+ghost.ncb
+ghost.suo
