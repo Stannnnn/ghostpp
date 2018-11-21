@@ -1405,25 +1405,25 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
 			}
 
 
-         //
-         // !ROLL
-         //
+			//
+			// !ROLL
+			//
 
-         else if( Command == "roll" )
-         {
-             int random_max = 10;
+			else if( Command == "roll" )
+			{
+				int random_max = 10;
 
-             if (!Payload.empty())
-             {
-                 random_max = UTIL_ToUInt32(Payload);
-                 if (random_max == 0)
-                 {
-                     random_max = 10;
-                 }
-             }
-             int random_nr = (rand() % random_max) + 1;
-             SendAllChat( "rolled " + UTIL_ToString(random_nr) + " out of " + UTIL_ToString(random_max));
-         }
+				if (!Payload.empty())
+				{
+					random_max = UTIL_ToUInt32(Payload);
+					if (random_max == 0)
+					{
+						random_max = 10;
+					}
+				}
+				int random_nr = (rand() % random_max) + 1;
+				SendAllChat( "rolled " + UTIL_ToString(random_nr) + " out of " + UTIL_ToString(random_max));
+			}
 
 			//
 			// !SAY
