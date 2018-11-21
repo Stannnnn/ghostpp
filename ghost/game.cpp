@@ -39,7 +39,8 @@
 #include <cmath>
 #include <string.h>
 #include <time.h>
-
+#include <cstdlib> 
+ 
 //
 // sorting classes
 //
@@ -1401,6 +1402,27 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
 					SendAllChat( m_GHost->m_Language->RefreshMessagesDisabled( ) );
 					m_RefreshMessages = false;
 				}
+			}
+
+
+			//
+			// !ROLL
+			//
+
+			else if( Command == "roll" )
+			{
+				int random_max = 10;
+
+				if (!Payload.empty())
+				{
+					random_max = UTIL_ToUInt32(Payload);
+					if (random_max == 0)
+					{
+						random_max = 10;
+					}
+				}
+				int random_nr = (rand() % random_max) + 1;
+				SendAllChat( "rolled " + UTIL_ToString(random_nr) + " out of " + UTIL_ToString(random_max));
 			}
 
 			//
