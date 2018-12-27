@@ -938,31 +938,58 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
 			// !DROP
 			//
 
-			else if( Command == "drop" && m_GameLoaded )
-				StopLaggers( "lagged out (dropped by admin)" );
+// 			else if( Command == "drop" && m_GameLoaded )
+// 				StopLaggers( "lagged out (dropped by admin)" );
 
-			//
-			// !END
-			//
+// 			//
+// 			// !END
+// 			//
 
-			else if( Command == "end" && m_GameLoaded )
+// 			else if( Command == "end" && m_GameLoaded )
+// 			{
+// 				CONSOLE_Print( "[GAME: " + m_GameName + "] is over (admin ended game)" );
+// 				StopPlayers( "was disconnected (admin ended game)" );
+// 			}
+
+// 			//
+// 			// !FAKEPLAYER
+// 			//
+
+// 			else if( Command == "fakeplayer" && !m_CountDownStarted )
+// 			{
+// 				if( m_FakePlayerPID == 255 )
+// 					CreateFakePlayer( );
+// 				else
+// 					DeleteFakePlayer( );
+// 			}
+if( m_ForfeitTime != 0 && GetTime( ) - m_ForfeitTime >= 5 )
+	{
+		// kick everyone on forfeit team
+		
+        for( vector<CGamePlayer *> :: iterator i = m_Players.begin( ); i != m_Players.end( ); ++i)
+		{
+			if( *i && !(*i)->GetLeftMessageSent( ) )
 			{
-				CONSOLE_Print( "[GAME: " + m_GameName + "] is over (admin ended game)" );
-				StopPlayers( "was disconnected (admin ended game)" );
+				char sid = GetSIDFromPID( (*i)->GetPID( ) );
+				
+				if( sid != 255 && m_Slots[sid].GetTeam( ) == m_ForfeitTeam )
+				{
+					(*i)->SetDeleteMe( true );
+					(*i)->SetLeftReason( "forfeited" );
+					(*i)->SetLeftCode( PLAYERLEAVE_LOST );
+				}
 			}
-
-			//
-			// !FAKEPLAYER
-			//
-
-			else if( Command == "fakeplayer" && !m_CountDownStarted )
-			{
-				if( m_FakePlayerPID == 255 )
-					CreateFakePlayer( );
-				else
-					DeleteFakePlayer( );
-			}
-
+		}
+		
+		string ForfeitTeamString = "Sentinel/West";
+		if( m_ForfeitTeam == 1 ) ForfeitTeamString = "Scourge/East";
+		
+		SendAllChat( "The " + ForfeitTeamString + " players have been removed from the game." );
+		SendAllChat( "Please wait five or so seconds before leaving so that stats can be properly saved." );
+		
+		m_ForfeitTime = 0;
+		m_GameOverTime = GetTime( );
+	}
 			//
 			// !FPPAUSE
 			//
