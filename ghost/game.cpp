@@ -1080,177 +1080,176 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
 			// !KICK (kick a player)
 			//
 
-			else if( Command == "kick" && !Payload.empty( ) )
 			{
-				CGamePlayer *LastMatch = NULL;
-				uint32_t Matches = GetPlayerFromNamePartial( Payload, &LastMatch );
+	CBaseGame :: EventPlayerDeleted( player );
 
-				if( Matches == 0 )
-					SendAllChat( m_GHost->m_Language->UnableToKickNoMatchesFound( Payload ) );
-				else if( Matches == 1 )
+	// record everything we need to know about the player for storing in the database later
+	// since we haven't stored the game yet (it's not over yet!) we can't link the gameplayer to the game
+	// see the destructor for where these CDBGamePlayers are stored in the database
+	// we could have inserted an incomplete record on creation and updated it later but this makes for a cleaner interface
+
+	if( m_GameLoading || m_GameLoaded )
+	{
+		// todotodo: since we store players that crash during loading it's possible that the stats classes could have no information on them
+		// that could result in a DBGamePlayer without a corresponding DBDotAPlayer - just be aware of the possibility
+
+		unsigned char SID = GetSIDFromPID( player->GetPID( ) );
+		unsigned char Team = 255;
+		unsigned char Colour = 255;
+
+		if( SID < m_Slots.size( ) )
+		{
+			Team = m_Slots[SID].GetTeam( );
+			Colour = m_Slots[SID].GetColour( );
+		}
+
+		m_DBGamePlayers.push_back( new CDBGamePlayer( 0, 0, player->GetName( ), player->GetExternalIPString( ), player->GetSpoofed( ) ? 1 : 0, player->GetSpoofedRealm( ), player->GetReserved( ) ? 1 : 0, player->GetFinishedLoading( ) ? player->GetFinishedLoadingTicks( ) - m_StartedLoadingTicks : 0, m_GameTicks / 1000, player->GetLeftReason( ), Team, Colour ) );
+
+		// also keep track of the last player to leave for the !banlast command
+
+		for( vector<CDBBan *> :: iterator i = m_DBBans.begin( ); i != m_DBBans.end( ); ++i )
+		{
+			if( (*i)->GetName( ) == player->GetName( ) )
+				m_DBBanLast = *i;
+		}
+		
+		// if this was early leave, suggest to draw the game
+		if( !m_MapType.empty( ) && m_GameTicks < 1000 * 60 )
+			SendAllChat( "Use !draw to vote to draw the game." );
+		
+		// possibly autoban if the leave method caused this player to get autoban enabled
+		// and if this player is not observer (and if autobans are enabled)
+		// and if we haven't "soft" ended the game
+		if( player->GetAutoban( ) && !m_GHost->m_AutoHostGameName.empty( ) && m_GHost->m_AutoHostMaximumGames != 0 && m_GHost->m_AutoHostAutoStartPlayers != 0 && Team != 12 && !m_SoftGameOver )
+		{
+			// ban if game is loading or if it's dota and player has left >= 4v4 situation
+			if( m_GameLoading || ( m_FirstLeaver && m_GameTicks < 1000 * 60 * 3 ) ) {
+				m_AutoBans.push_back( player->GetName( ) );
+				m_FirstLeaver = false;
+			} else {
+				string BanType = "";
+				
+				if( m_MapType == "dota" || m_MapType == "dotaab" || m_MapType == "lod" || m_MapType == "dota2" || m_MapType == "eihl" || m_MapType == "nwu" || m_MapType == "lodab" )
+					BanType = "dota";
+				
+				else if( m_MapType == "castlefight" || m_MapType == "castlefight2" || m_MapType == "civwars" )
+					BanType = "3v3";
+				
+				else if( m_MapType == "legionmega" || m_MapType == "legionmega_ab" || m_MapType == "lihl" )
+					BanType = "4v4";
+				
+				if( !BanType.empty( ) )
 				{
-					LastMatch->SetDeleteMe( true );
-					LastMatch->SetLeftReason( m_GHost->m_Language->WasKickedByPlayer( User ) );
+					char sid, team;
+					uint32_t CountAlly = 0;
+					uint32_t CountEnemy = 0;
 
-					if( !m_GameLoading && !m_GameLoaded )
-						LastMatch->SetLeftCode( PLAYERLEAVE_LOBBY );
-					else
-						LastMatch->SetLeftCode( PLAYERLEAVE_LOST );
-
-					if( !m_GameLoading && !m_GameLoaded )
-						OpenSlot( GetSIDFromPID( LastMatch->GetPID( ) ), false );
-				}
-				else
-					SendAllChat( m_GHost->m_Language->UnableToKickFoundMoreThanOneMatch( Payload ) );
-			}
-
-			//
-			// !LATENCY (set game latency)
-			//
-
-			else if( Command == "latency" )
-			{
-				if( Payload.empty( ) )
-					SendAllChat( m_GHost->m_Language->LatencyIs( UTIL_ToString( m_Latency ) ) );
-				else
-				{
-					m_Latency = UTIL_ToUInt32( Payload );
-
-					if( m_Latency <= 10 )
+                    for( vector<CGamePlayer *> :: iterator i = m_Players.begin( ); i != m_Players.end( ); ++i)
 					{
-						m_Latency = 10;
-						SendAllChat( m_GHost->m_Language->SettingLatencyToMinimum( "10" ) );
+						if( *i && !(*i)->GetLeftMessageSent( ) )
+						{
+							sid = GetSIDFromPID( (*i)->GetPID( ) );
+							if( sid != 255 )
+							{
+								team = m_Slots[sid].GetTeam( );
+								if( team == Team )
+									CountAlly++;
+								else
+									CountEnemy++;
+							}
+						}
 					}
-					else if( m_Latency >= 500 )
+				
+					if( BanType == "dota" && CountAlly >= 4 && CountEnemy >= 4 )
+						m_AutoBans.push_back( player->GetName( ) );
+					
+					else if( BanType == "3v3" && CountAlly == 3 && CountEnemy >= 2 )
+						m_AutoBans.push_back( player->GetName( ) );
+					
+					else if( BanType == "4v4" && CountAlly == 4 && CountEnemy >= 3 )
+						m_AutoBans.push_back( player->GetName( ) );
+				}
+			}
+		}
+		
+		// set the winner if appropriate, or draw the game
+		if( !m_SoftGameOver && !m_MapType.empty( ) && m_Stats && m_GameOverTime == 0 && !m_Stats->IsWinner( ) && Team != 12 && m_NumTeams == 2 )
+		{
+			// check if everyone on leaver's team left but other team has more than two players
+			uint32_t CountAlly = 0;
+			uint32_t CountEnemy = 0;
+
+            for( vector<CGamePlayer *> :: iterator i = m_Players.begin( ); i != m_Players.end( ); ++i)
+			{
+				if( *i && !(*i)->GetLeftMessageSent( ) && *i != player )
+				{
+					char sid = GetSIDFromPID( (*i)->GetPID( ) );
+					if( sid != 255 )
 					{
-						m_Latency = 500;
-						SendAllChat( m_GHost->m_Language->SettingLatencyToMaximum( "500" ) );
-					}
-					else
-						SendAllChat( m_GHost->m_Language->SettingLatencyTo( UTIL_ToString( m_Latency ) ) );
-				}
-			}
-
-			//
-			// !LOCK
-			//
-
-			else if( Command == "lock" && ( RootAdminCheck || IsOwner( User ) ) )
-			{
-				SendAllChat( m_GHost->m_Language->GameLocked( ) );
-				m_Locked = true;
-			}
-
-			//
-			// !MESSAGES
-			//
-
-			else if( Command == "messages" )
-			{
-				if( Payload == "on" )
-				{
-					SendAllChat( m_GHost->m_Language->LocalAdminMessagesEnabled( ) );
-					m_LocalAdminMessages = true;
-				}
-				else if( Payload == "off" )
-				{
-					SendAllChat( m_GHost->m_Language->LocalAdminMessagesDisabled( ) );
-					m_LocalAdminMessages = false;
-				}
-			}
-
-			//
-			// !MUTE
-			//
-
-			else if( Command == "mute" )
-			{
-				CGamePlayer *LastMatch = NULL;
-				uint32_t Matches = GetPlayerFromNamePartial( Payload, &LastMatch );
-
-				if( Matches == 0 )
-					SendAllChat( m_GHost->m_Language->UnableToMuteNoMatchesFound( Payload ) );
-				else if( Matches == 1 )
-				{
-					SendAllChat( m_GHost->m_Language->MutedPlayer( LastMatch->GetName( ), User ) );
-					LastMatch->SetMuted( true );
-				}
-				else
-					SendAllChat( m_GHost->m_Language->UnableToMuteFoundMoreThanOneMatch( Payload ) );
-			}
-
-			//
-			// !MUTEALL
-			//
-
-			else if( Command == "muteall" && m_GameLoaded )
-			{
-				SendAllChat( m_GHost->m_Language->GlobalChatMuted( ) );
-				m_MuteAll = true;
-			}
-
-			//
-			// !OPEN (open slot)
-			//
-
-			else if( Command == "open" && !Payload.empty( ) && !m_GameLoading && !m_GameLoaded )
-			{
-				// open as many slots as specified, e.g. "5 10" opens slots 5 and 10
-
-				stringstream SS;
-				SS << Payload;
-
-				while( !SS.eof( ) )
-				{
-					uint32_t SID;
-					SS >> SID;
-
-					if( SS.fail( ) )
-					{
-						CONSOLE_Print( "[GAME: " + m_GameName + "] bad input to open command" );
-						break;
-					}
-					else
-						OpenSlot( (unsigned char)( SID - 1 ), true );
-				}
-			}
-
-			//
-			// !OPENALL
-			//
-
-			else if( Command == "openall" && !m_GameLoading && !m_GameLoaded )
-				OpenAllSlots( );
-
-			//
-			// !OWNER (set game owner)
-			//
-
-			else if( Command == "owner" )
-			{
-				if( RootAdminCheck || IsOwner( User ) || !GetPlayerFromName( m_OwnerName, false ) )
-				{
-					if( !Payload.empty( ) )
-					{
-						SendAllChat( m_GHost->m_Language->SettingGameOwnerTo( Payload ) );
-						m_OwnerName = Payload;
-					}
-					else
-					{
-						SendAllChat( m_GHost->m_Language->SettingGameOwnerTo( User ) );
-						m_OwnerName = User;
+						char team = m_Slots[sid].GetTeam( );
+						if( team == Team )
+							CountAlly++;
+						else
+							CountEnemy++;
 					}
 				}
-				else
-					SendAllChat( m_GHost->m_Language->UnableToSetGameOwner( m_OwnerName ) );
 			}
-
-			//
-			// !PING
-			//
-
-			else if( Command == "ping" )
+			
+			if( CountAlly == 0 && ( CountEnemy >= 2 || ( m_SoloTeam && CountEnemy >= 1 ) ) )
 			{
+				// if less than one minute has elapsed, draw the game
+				// this may be abused for mode voting and such, but hopefully not (and that's what bans are for)
+				if( m_GameTicks < 1000 * 2 || ( m_MapType != "cfone" && m_MapType != "legionmegaone" && m_MapType != "legionmegaone2" && m_GameTicks < 1000 * 60 ) )
+				{
+					SendAllChat( "Only one team is remaining, this game will end in sixty seconds and be recorded as a draw." );
+					m_GameOverTime = GetTime( );
+				}
+				
+				// otherwise, if more than five minutes have elapsed, give the other team the win
+				// this is now delayed by fifteen seconds to prevent setting winner on lag and such
+				else if( m_GameTicks > 1000 * 60 * 5 || ( m_SoloTeam && m_GameTicks > 1000 * 10 ) )
+				{
+					m_SetWinnerTicks = m_GameTicks;
+					m_SetWinnerTeam = Team;
+					
+					SendAllChat( "The other team has left. If you stay for fifteen seconds, the game will be marked as your win." );
+				}
+			}
+		}
+		
+		// if stats and not solo, and at least two leavers in first four minutes, then draw the game
+		uint32_t DrawTicks = 1000 * 60 * 3; //four minutes
+		
+		if( m_MapType == "legionmega" || m_MapType == "lihl" || m_MapType == "legionmega_nc" )
+			DrawTicks = 1000 * 80; //1:20 before 
+		else if( m_MapType == "dota" || m_MapType == "dotaab" || m_MapType == "eihl" )
+            DrawTicks = 1000 * 60 * 5; //five minute, before game starts
+
+		if( !m_SoftGameOver && !m_MapType.empty( ) && m_Stats && m_GameOverTime == 0 && !m_Stats->IsWinner( ) && Team != 12 && m_NumTeams == 2 && !m_SoloTeam && m_GameTicks < DrawTicks && m_StartPlayers > 6 && m_MapType != "treetag" && m_MapType != "battleships"  )
+		{
+			// check how many leavers, by starting from start players and subtracting each non-leaver player
+			uint32_t m_NumLeavers = m_StartPlayers;
+			
+            for( vector<CGamePlayer *> :: iterator i = m_Players.begin( ); i != m_Players.end( ); ++i)
+			{
+				if( *i && !(*i)->GetLeftMessageSent( ) && *i != player )
+					m_NumLeavers--;
+			}
+			
+			if( m_NumLeavers >= 2 )
+			{
+				SendAllChat( "Two players have left in the first few minutes." );
+				SendAllChat( "This game has been marked as a draw. You may leave at any time." );
+				m_GameOverTime = GetTime( );
+
+				// make sure leavers will get banned
+				m_ForceBanTicks = m_GameTicks;
+				m_SoftGameOver = true;
+				m_Stats->LockStats( );
+			}
+		}
+	}
+}			{
 				// kick players with ping higher than payload if payload isn't empty
 				// we only do this if the game hasn't started since we don't want to kick players from a game in progress
 
