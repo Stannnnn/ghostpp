@@ -1939,3 +1939,12 @@ void CGame :: SaveGameData( )
 	CONSOLE_Print( "[GAME: " + m_GameName + "] saving game data to database" );
 	m_CallableGameAdd = m_GHost->m_DB->ThreadedGameAdd( m_GHost->m_BNETs.size( ) == 1 ? m_GHost->m_BNETs[0]->GetServer( ) : string( ), m_DBGame->GetMap( ), m_GameName, m_OwnerName, m_GameTicks / 1000, m_GameState, m_CreatorName, m_CreatorServer );
 }
+	
+
+if( RandMax <= RAND_MAX && RandMax >= 2 )
+        {
+			player->SetStatsDotASentTime( GetTime( ) );
+		}
+		else
+			SendChat( player, "Error: maximum number to roll from is " + UTIL_ToString( RAND_MAX ) + "." );
+	}
